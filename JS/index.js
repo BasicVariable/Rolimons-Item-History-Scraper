@@ -5,7 +5,6 @@ const proxyAgent = require("https-proxy-agent");
 
 // ---
 const scrape = require("./subFiles/scrape.js");
-const { config } = require("node:process");
 // ---
 
 global.reactiveDelay = (ms, reaction) => new Promise(res => {
@@ -45,6 +44,8 @@ const getItems = async () => {
 };
 
 fs.readFile("../config.yml", 'utf-8', async (err, res) => {
+    let config;
+
     if (err) {
         console.log("Failed to read config.yml", err);
         await reactiveDelay(20_000, process.exit)
@@ -100,10 +101,13 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
 */
     let promises = [];
     for (load of dividedLoad) promises.push(
-        new Promise(async (res) => res(await scrape(load, proxies.shift(), config)))
+        new Promise(async (res) => {
+            await scrape(load, proxies.shift(), config);
+            res()
+        })
     );
     await Promise.all(promises);
 
-    console.log(`Finished scraping ${itemIds}\nTook ${fixTime(Date.now() - startTime)}\nctrl/cmd + c to close`);
+    console.log(`Finished scraping ${itemIds.length} items\nTook ${fixTime(Date.now() - startTime)}\nctrl/cmd + c to close`);
     while (true) {await reactiveDelay(5000)}
 })

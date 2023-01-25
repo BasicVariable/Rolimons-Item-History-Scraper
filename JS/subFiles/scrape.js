@@ -2,6 +2,10 @@
 
 const proxyAgent = require("https-proxy-agent");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const cheerio = require("cheerio");
+const { QuickDB } = require("quick.db");
+
+const rapDB = new QuickDB({ filePath: '../raplogs_json.sqlite' });
 
 const fetchTimeout = (url, ms, { signal, ...options } = {}) => {
     const controller = new AbortController();
@@ -12,8 +16,8 @@ const fetchTimeout = (url, ms, { signal, ...options } = {}) => {
 
 const getItem = async (ID, agent, conditions) => {
     while (true){
-        let response = await fetch(`https://www.rolimons.com/item/${ID}`, {
-            agent
+        let response = await fetchTimeout(`https://www.rolimons.com/item/${ID}`, conditions.requestTimeout, {
+            agent: agent || null
         }).catch(err => console.log(err));
 
         if (!response || response.status != 200){
@@ -31,11 +35,68 @@ const getItem = async (ID, agent, conditions) => {
 
 const scrape = async (itemIds, proxy, config) => {
     const agent = new proxyAgent(`${(!proxy.includes("http"))?"http://":""}${proxy}`);
+    let itemRapHistory = [];
+
+    const fail = async (ID) => {
+        itemIds.push(ID);
+        console.log("   ! Failed to load item page: ", ID);
+        await reactiveDelay(30_000)
+    };
 
     while (itemIds.length > 1){
         let ID = itemIds.shift(), itemPage = await getItem(ID, agent, config.ratelimit);
-        
-    }
+        if (!itemPage){
+            await fail();
+            continue
+        };
+
+        let scriptContent, $ = cheerio.load(itemPage);
+        $("script").each((index, current) => {
+            let content = $(current)[0].children[0].data;
+            // Checks for the variable in the script
+            if (!current.includes("history_data")) return;
+
+            scriptContent = {
+                itemDetailsData: JSON.parse(content.match(/item_details_data = (\[.*?\])/)[1]),
+                itemHistory: JSON.parse(content.match(/history_data = (\[.*?\])/)[1])
+            }
+        });
+
+        if (!scriptContent){
+            await fail();
+            continue
+        };
+
+        // Rolimon makes a timestamp (in seconds) for each update of data 
+        let 
+            timeStamps = scriptContent.itemHistory.timestamp,
+            rapHistory = scriptContent.itemHistory.rap,
+            lastStamp,
+            dayConverted = 0 
+        ;
+
+        // puts all old rap data at start of array skips timestamps by day periods (also is it timeStamp or timestamp? like are they seperate idk)
+        for (let i = 0; true; i++){
+            let 
+                timeStamp = timeStamps[timeStamps.length - i],
+                rapOfPeriod = rapHistory[timeStamps.length - i]
+            ;
+
+            if (!timeStamp || !rapOfPeriod) break;
+            if (!(lastStamp || 0) - timeStamp > 86400) continue;
+
+            itemRapHistory.push(rapOfPeriod);
+            lastStamp = timeStamp;
+            dayConverted++;
+
+            // stops after a year of data is converted (I didn't need that much)
+            if (dayConverted > 365) break
+        };
+
+        console.log(`\tFinished scraping ${ID}`)
+    };
+
+    await rapDB.set(ID, rapHistory)
 };
 
 module.exports = scrape

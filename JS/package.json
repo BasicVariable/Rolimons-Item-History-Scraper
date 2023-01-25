@@ -8,7 +8,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^8.0.1",
+    "cheerio": "^1.0.0-rc.12",
     "https-proxy-agent": "^5.0.1",
-    "node-fetch": "^3.3.0"
+    "node-fetch": "^3.3.0",
+    "quick.db": "^9.0.8"
   }
 }
