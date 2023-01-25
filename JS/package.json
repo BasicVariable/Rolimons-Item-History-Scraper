@@ -1,0 +1,14 @@
+{
+  "name": "project-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "https-proxy-agent": "^5.0.1",
+    "node-fetch": "^3.3.0"
+  }
+}
