@@ -34,8 +34,13 @@ const getItem = async (ID, agent, conditions) => {
 };
 
 const scrape = async (itemIds, proxy, config) => {
-    const agent = new proxyAgent(`${(!proxy.includes("http"))?"http://":""}${proxy}`);
-    let itemRapHistory = [];
+    let 
+        agent = (!proxy)?
+            null    
+            :        
+            new proxyAgent(`${(!proxy.includes("https"))?"https://":""}${proxy}`),
+        itemRapHistory = []
+    ;
 
     const fail = async (ID) => {
         itemIds.push(ID);
@@ -52,13 +57,19 @@ const scrape = async (itemIds, proxy, config) => {
 
         let scriptContent, $ = cheerio.load(itemPage);
         $("script").each((index, current) => {
-            let content = $(current)[0].children[0].data;
+            let scriptElement = $(current)[0];
+
+            if (!scriptElement || !scriptElement.firstChild) return;
+
+            let content = $(current)[0].firstChild.data;
             // Checks for the variable in the script
-            if (!current.includes("history_data")) return;
+            if (!content.includes("history_data")) return;
+
+            content = content.replace(/var\b/g, ""); content = content.replace(/\s/g, "");
 
             scriptContent = {
-                itemDetailsData: JSON.parse(content.match(/item_details_data = (\[.*?\])/)[1]),
-                itemHistory: JSON.parse(content.match(/history_data = (\[.*?\])/)[1])
+                itemDetailsData: JSON.parse(content.match(/item_details_data=(.*?})/)[1]),
+                itemHistory: JSON.parse(content.match(/history_data=(.*?})/)[1])
             }
         });
 
@@ -71,21 +82,21 @@ const scrape = async (itemIds, proxy, config) => {
         let 
             timeStamps = scriptContent.itemHistory.timestamp,
             rapHistory = scriptContent.itemHistory.rap,
-            lastStamp,
+            lastStamp = 0,
             dayConverted = 0 
         ;
 
         // puts all old rap data at start of array skips timestamps by day periods (also is it timeStamp or timestamp? like are they seperate idk)
-        for (let i = 0; true; i++){
+        for (let i = 1; true; i++){
             let 
                 timeStamp = timeStamps[timeStamps.length - i],
                 rapOfPeriod = rapHistory[timeStamps.length - i]
             ;
 
             if (!timeStamp || !rapOfPeriod) break;
-            if (!(lastStamp || 0) - timeStamp > 86400) continue;
+            if (lastStamp - timeStamp < 86400 && lastStamp != 0) continue;
 
-            itemRapHistory.push(rapOfPeriod);
+            itemRapHistory.unshift(rapOfPeriod);
             lastStamp = timeStamp;
             dayConverted++;
 

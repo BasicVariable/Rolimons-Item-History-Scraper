@@ -2,6 +2,7 @@ const fs = require("node:fs");
 
 const yaml = require("js-yaml");
 const proxyAgent = require("https-proxy-agent");
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // ---
 const scrape = require("./subFiles/scrape.js");
@@ -68,8 +69,12 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
             proxy = `${parts[2]}:${parts[3]}@${parts[0]}:${parts[1]}`
         };
 
-        const proxyIndex = proxies.indexOf(proxy), agent = new proxyAgent(proxy);
-        if (!agent) {
+        const 
+            proxyIndex = proxies.indexOf(proxy), 
+            agent = new proxyAgent(`${(!proxy.includes("http"))?"http://":""}${proxy}`)
+        ;
+
+        if (!agent || agent.proxy.auth.includes("undefined")) {
             console.log(`Proxy ${proxy} is invalid :(`);
             proxies.splice(proxyIndex, 1);
             continue
@@ -82,7 +87,7 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
 
     if (proxies.length < 1) {
         console.log(`\tScraping ${itemIds.length} items on local ip`);
-        await scrape(itemIds)
+        await scrape(itemIds, null, config)
     };
 
     let maxLoad = Math.ceil(itemIds/proxies), dividedLoad = proxies.reduce((accumulator, current, index) => {
