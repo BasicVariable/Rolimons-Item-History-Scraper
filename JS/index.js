@@ -62,9 +62,10 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
     const startTime = Date.now(), itemIds = await getItems();
 
     let proxies = config.proxies.split("\n") || [];
+
     for (proxy of proxies){
         // webshare proxy support
-        if (!proxies.includes("@")){
+        if (!proxies.includes("@") && proxy.split(':').length > 3){
             let parts = proxy.split(':');
             proxy = `${parts[2]}:${parts[3]}@${parts[0]}:${parts[1]}`
         };
@@ -74,7 +75,7 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
             agent = new proxyAgent(`${(!proxy.includes("http"))?"http://":""}${proxy}`)
         ;
 
-        if (!agent || agent.proxy.auth.includes("undefined")) {
+        if (!agent || !agent.proxy.auth || agent.proxy.auth.includes("undefined")) {
             console.log(`Proxy ${proxy} is invalid :(`);
             proxies.splice(proxyIndex, 1);
             continue
@@ -90,7 +91,7 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
         await scrape(itemIds, null, config)
     };
 
-    let maxLoad = Math.ceil(itemIds/proxies), dividedLoad = proxies.reduce((accumulator, current, index) => {
+    let maxLoad = Math.ceil(itemIds.length/proxies.length), dividedLoad = itemIds.reduce((accumulator, current, index) => {
         const loadIndex = Math.floor(index/maxLoad)
 
         if(!accumulator[loadIndex]) accumulator[loadIndex] = [];
@@ -111,6 +112,7 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
             res()
         })
     );
+
     await Promise.all(promises);
 
     console.log(`Finished scraping ${itemIds.length} items\nTook ${fixTime(Date.now() - startTime)}\nctrl/cmd + c to close`);

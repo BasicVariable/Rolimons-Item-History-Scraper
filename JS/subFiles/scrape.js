@@ -20,7 +20,9 @@ const getItem = async (ID, agent, conditions) => {
             agent: agent || null
         }).catch(err => console.log(err));
 
-        if (!response || response.status != 200){
+        if (!response) continue;
+
+        if (response.status != 200){
             if (response.status == 429 && conditions.requestUntil429 && conditions.ignore == false) await reactiveDelay(conditions.delayBetweenPages);
             continue
         };
