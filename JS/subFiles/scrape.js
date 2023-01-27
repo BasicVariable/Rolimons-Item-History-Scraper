@@ -21,7 +21,7 @@ const getItem = async (ID, agent, conditions) => {
         }).catch(err => console.log(err));
 
         if (!response || response.status != 200){
-            if (response.status == 429 && conditions.requestUntil429) await reactiveDelay(conditions.delayBetweenPages);
+            if (response.status == 429 && conditions.requestUntil429 && conditions.ignore == false) await reactiveDelay(conditions.delayBetweenPages);
             continue
         };
 
@@ -104,7 +104,8 @@ const scrape = async (itemIds, proxy, config) => {
             if (dayConverted > 365) break
         };
 
-        console.log(`\tFinished scraping ${ID}`)
+        console.log(`\tFinished scraping ${ID}`);
+        await reactiveDelay(config.ratelimit.delayBetweenPages)
     };
 
     await rapDB.set(ID, rapHistory)
