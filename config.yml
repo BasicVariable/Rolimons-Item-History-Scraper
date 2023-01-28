@@ -1,0 +1,13 @@
+ratelimit: 
+  # Time in MS it takes for a request to timeout (good if you're using a rotating proxies) 
+  requestTimeout: 10_000
+  # Only do this if you have proxies per item (or a rotating proxy with lots of threads)
+  ignore: false
+  # Might get blocked by cloudflare if on local IP / when it hits status of 429 it'll use delayBetweenPages int
+  requestUntil429: false
+  delayBetweenPages: 20
+
+# Will check if valid and supports webshare format JUST INDENT
+proxies: |-
+  
+
