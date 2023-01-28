@@ -1,13 +1,7 @@
-# Taken from https://nodejs.org/en/docs/guides/nodejs-docker-webapp/
+# Edited ver of https://nodejs.org/en/docs/guides/nodejs-docker-webapp/
 FROM node:18
 # Create app directory
-WORKDIR /app/nodejs/roliscraper
-
-# Copy and download dependencies
-COPY /JS/package*.json ./
-# COPY package*.json ./
+COPY . /app
+WORKDIR /app/JS
 RUN npm install
-
-COPY . .
-ENTRYPOINT ["/JS"]
-CMD [ "node", "index.js" ]
+CMD node index.js
