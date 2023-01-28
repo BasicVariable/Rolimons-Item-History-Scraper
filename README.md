@@ -1,3 +1,6 @@
+# WARNING
+Don't use unstable/free proxies on this, I haven't finished it yet and need to add better catching for issues with proxies.
+
 # Rolimons-Item-History-Scraper
 Scrapes all item rap history on Rolimons, good for building a years worth of rap history as an sql db. 
 
