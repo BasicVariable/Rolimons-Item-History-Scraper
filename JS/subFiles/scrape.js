@@ -106,8 +106,8 @@ const scrape = async (itemIds, proxy, config) => {
             if (dayConverted > 365) break
         };
 
-        console.log(`\tFinished scraping ${ID}`);
-        await reactiveDelay(config.ratelimit.delayBetweenPages)
+        await reactiveDelay(config.ratelimit.delayBetweenPages);
+        console.log(`\t[${(new Date()).toLocaleString('en-US')}] Finished scraping ${ID}`)
     };
 
     await rapDB.set(ID, rapHistory)
