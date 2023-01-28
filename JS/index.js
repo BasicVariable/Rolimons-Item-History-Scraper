@@ -88,7 +88,7 @@ fs.readFile("../config.yml", 'utf-8', async (err, res) => {
 
     if (proxies.length < 1) {
         console.log(`\tScraping ${itemIds.length} items on local ip`);
-        await scrape(itemIds, null, config)
+        await scrape(itemIds.slice(0), null, config)
     };
 
     let maxLoad = Math.ceil(itemIds.length/proxies.length), dividedLoad = itemIds.reduce((accumulator, current, index) => {
