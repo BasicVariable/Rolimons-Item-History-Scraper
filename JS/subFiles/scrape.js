@@ -36,13 +36,10 @@ const getItem = async (ID, agent, conditions) => {
 };
 
 const scrape = async (itemIds, proxy, config) => {
-    let 
-        agent = (!proxy)?
-            null    
-            :        
-            new proxyAgent(`${(!proxy.includes("https"))?"https://":""}${proxy}`),
-        itemRapHistory = []
-    ;
+    let agent = (!proxy)?
+        null    
+        :        
+        new proxyAgent(`${(!proxy.includes("https"))?"https://":""}${proxy}`);
 
     const fail = async (ID) => {
         itemIds.push(ID);
@@ -51,7 +48,17 @@ const scrape = async (itemIds, proxy, config) => {
     };
 
     while (itemIds.length > 1){
-        let ID = itemIds.shift(), itemPage = await getItem(ID, agent, config.ratelimit);
+        let 
+            ID = itemIds.shift(),
+            itemRapHistory = [], 
+            itemPage = await getItem(ID, agent, config.ratelimit)
+        ;
+
+        if (await rapDB.get(ID)) {
+            console.log(`\t[${(new Date()).toLocaleString('en-US')}] Skipped ${ID} in scraping`);
+            continue
+        };
+
         if (!itemPage){
             await fail();
             continue
@@ -106,11 +113,10 @@ const scrape = async (itemIds, proxy, config) => {
             if (dayConverted > 365) break
         };
 
-        await reactiveDelay(config.ratelimit.delayBetweenPages);
-        console.log(`\t[${(new Date()).toLocaleString('en-US')}] Finished scraping ${ID}`)
-    };
-
-    await rapDB.set(ID, rapHistory)
+        console.log(`\t[${(new Date()).toLocaleString('en-US')}] Finished scraping ${ID}`);
+        await rapDB.set(ID, itemRapHistory);
+        await reactiveDelay(config.ratelimit.delayBetweenPages)
+    }
 };
 
 module.exports = scrape

@@ -29,4 +29,5 @@
 node_modules/
 .vscode/
 package-lock.json
+config.yml
 *.yml

@@ -5,7 +5,7 @@ ratelimit:
   ignore: false
   # Might get blocked by cloudflare if on local IP / when it hits status of 429 it'll use delayBetweenPages int
   requestUntil429: false
-  delayBetweenPages: 20
+  delayBetweenPages: 5_000
 
 # Will check if valid and supports webshare format JUST INDENT
 proxies: |-
